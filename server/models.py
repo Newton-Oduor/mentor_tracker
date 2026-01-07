@@ -6,15 +6,13 @@ metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
 
 
-metadata = MetaData()
-db = SQLAlchemy(metadata=metadata)
-
-
-class Mentor(db.Model):
+class Mentor(db.Model, SerializerMixin):
     __tablename__ = 'mentors'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
+
+    serialize_rules = serialize_rules = ("-cohort.mentor", "-cohort.student_phases.cohort")
 
     cohort = db.relationship(
         'Cohort',
@@ -30,7 +28,7 @@ class Mentor(db.Model):
         return len(student_ids)
 
 
-class Cohort(db.Model):
+class Cohort(db.Model, SerializerMixin):
     __tablename__ = 'cohorts'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -41,11 +39,13 @@ class Cohort(db.Model):
     mentor_id = db.Column(db.Integer, db.ForeignKey('mentors.id'))
     mentor = db.relationship('Mentor', back_populates='cohort')
 
+    serialize_rules = ("-mentor.cohort", "-phases.cohort")
+
     phases = db.relationship('Phase', back_populates='cohort')
     student_phases = db.relationship('StudentPhase', back_populates='cohort')
 
 
-class Student(db.Model):
+class Student(db.Model, SerializerMixin):
     __tablename__ = 'students'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -54,7 +54,7 @@ class Student(db.Model):
     student_phases = db.relationship('StudentPhase', back_populates='student')
 
 
-class Phase(db.Model):
+class Phase(db.Model, SerializerMixin):
     __tablename__ = 'phases'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -66,7 +66,7 @@ class Phase(db.Model):
     student_phases = db.relationship('StudentPhase', back_populates='phase')
 
 
-class StudentPhase(db.Model):
+class StudentPhase(db.Model, SerializerMixin):
     __tablename__ = 'student_phase'
 
     id = db.Column(db.Integer, primary_key=True)
