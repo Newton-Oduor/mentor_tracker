@@ -6,9 +6,7 @@ metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
 
 
-# =========================
-# Mentor
-# =========================
+
 class Mentor(db.Model, SerializerMixin):
     __tablename__ = 'mentors'
 
@@ -32,9 +30,7 @@ class Mentor(db.Model, SerializerMixin):
         return len(self.cohort.students) if self.cohort else 0
 
 
-# =========================
-# Cohort
-# =========================
+
 class Cohort(db.Model, SerializerMixin):
     __tablename__ = 'cohorts'
 
@@ -67,9 +63,7 @@ class Cohort(db.Model, SerializerMixin):
     )
 
 
-# =========================
-# Student
-# =========================
+
 class Student(db.Model, SerializerMixin):
     __tablename__ = 'students'
 
@@ -89,9 +83,7 @@ class Student(db.Model, SerializerMixin):
     )
 
 
-# =========================
-# Phase
-# =========================
+
 class Phase(db.Model, SerializerMixin):
     __tablename__ = 'phases'
 
