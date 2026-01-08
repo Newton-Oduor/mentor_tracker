@@ -25,13 +25,6 @@ def bad_request(message="Bad request"):
     return {"error": message}, 400
 
 
-def parse_date(value, field_name):
-    try:
-        return datetime.fromisoformat(value).date()
-    except Exception:
-        raise ValueError(f"{field_name} must be in YYYY-MM-DD format")
-
-
 
 class Mentors(Resource):
     def get(self):
