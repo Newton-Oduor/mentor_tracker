@@ -2,11 +2,13 @@ from flask import Flask, request
 from flask_restful import Api, Resource
 from flask_migrate import Migrate
 from datetime import datetime
+from flask_cors import CORS
 
 from models import db, Mentor, Cohort, Student
 
 
 app = Flask(__name__)
+CORS(app)
 
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///moringa.db'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
@@ -23,6 +25,13 @@ def not_found(resource="Resource"):
 
 def bad_request(message="Bad request"):
     return {"error": message}, 400
+
+
+def parse_date(value, field_name):
+    try:
+        return datetime.fromisoformat(value).date()
+    except Exception:
+        raise ValueError(f"{field_name} must be in YYYY-MM-DD format")
 
 
 
