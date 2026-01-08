@@ -6,28 +6,35 @@ metadata = MetaData()
 db = SQLAlchemy(metadata=metadata)
 
 
+# =========================
+# Mentor
+# =========================
 class Mentor(db.Model, SerializerMixin):
     __tablename__ = 'mentors'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
-    serialize_rules = serialize_rules = ("-cohort.mentor", "-cohort.student_phases.cohort")
-
+    # One mentor -> one cohort
     cohort = db.relationship(
         'Cohort',
         back_populates='mentor',
         uselist=False
     )
 
+    serialize_rules = (
+        '-cohort.mentor',
+        '-cohort.students.cohort',
+        '-cohort.phases.cohort',
+    )
+
     def student_count(self):
-        if not self.cohort:
-            return 0
-
-        student_ids = {sp.student_id for sp in self.cohort.student_phases}
-        return len(student_ids)
+        return len(self.cohort.students) if self.cohort else 0
 
 
+# =========================
+# Cohort
+# =========================
 class Cohort(db.Model, SerializerMixin):
     __tablename__ = 'cohorts'
 
@@ -39,21 +46,52 @@ class Cohort(db.Model, SerializerMixin):
     mentor_id = db.Column(db.Integer, db.ForeignKey('mentors.id'))
     mentor = db.relationship('Mentor', back_populates='cohort')
 
-    serialize_rules = ("-mentor.cohort", "-phases.cohort")
+    # One cohort -> many students
+    students = db.relationship(
+        'Student',
+        back_populates='cohort',
+        cascade='all, delete-orphan'
+    )
 
-    phases = db.relationship('Phase', back_populates='cohort')
-    student_phases = db.relationship('StudentPhase', back_populates='cohort')
+    # One cohort -> many phases
+    phases = db.relationship(
+        'Phase',
+        back_populates='cohort',
+        cascade='all, delete-orphan'
+    )
+
+    serialize_rules = (
+        '-mentor.cohort',
+        '-students.cohort',
+        '-phases.cohort',
+    )
 
 
+# =========================
+# Student
+# =========================
 class Student(db.Model, SerializerMixin):
     __tablename__ = 'students'
 
     id = db.Column(db.Integer, primary_key=True)
     name = db.Column(db.String, nullable=False)
 
-    student_phases = db.relationship('StudentPhase', back_populates='student')
+    # Global grade (simple model)
+    grade = db.Column(db.Float)
+
+    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'))
+    cohort = db.relationship('Cohort', back_populates='students')
+
+    serialize_rules = (
+        '-cohort.students',
+        '-cohort.phases',
+        '-cohort.mentor',
+    )
 
 
+# =========================
+# Phase
+# =========================
 class Phase(db.Model, SerializerMixin):
     __tablename__ = 'phases'
 
@@ -63,18 +101,8 @@ class Phase(db.Model, SerializerMixin):
     cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'))
     cohort = db.relationship('Cohort', back_populates='phases')
 
-    student_phases = db.relationship('StudentPhase', back_populates='phase')
-
-
-class StudentPhase(db.Model, SerializerMixin):
-    __tablename__ = 'student_phase'
-
-    id = db.Column(db.Integer, primary_key=True)
-    student_id = db.Column(db.Integer, db.ForeignKey('students.id'))
-    phase_id = db.Column(db.Integer, db.ForeignKey('phases.id'))
-    cohort_id = db.Column(db.Integer, db.ForeignKey('cohorts.id'))
-    grade = db.Column(db.Float)
-
-    student = db.relationship('Student', back_populates='student_phases')
-    phase = db.relationship('Phase', back_populates='student_phases')
-    cohort = db.relationship('Cohort', back_populates='student_phases')
+    serialize_rules = (
+        '-cohort.phases',
+        '-cohort.students',
+        '-cohort.mentor',
+    )
